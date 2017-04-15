@@ -133,7 +133,11 @@ def setupCities():
     return cities
 
 def main():
-    setupCities()
+    cities = setupCities()
+    resultFile = open("cities.json", "w+")
+    res = json.dumps(cities, ensure_ascii=False)
+    resultFile.write(res)
+    resultFile.close()
 
 if __name__ == "__main__":
     main()
