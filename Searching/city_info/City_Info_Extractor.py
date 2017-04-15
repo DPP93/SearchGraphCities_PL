@@ -1,3 +1,4 @@
+from math import radians, cos, sin, asin, sqrt
 import requests
 import json
 
@@ -5,22 +6,34 @@ class City:
     def __init__(self, cityName, population):
         self.cityName = cityName
         self.population = population
-        self.listOfDistancesToOtherCities = dict()
-        self.distanceToWarsaw = 0
+        self.listOfDistancesToOtherCities = []
+        self.distanceToInStraightLineWarsaw = 0
         self.latitude = 0
         self.longitude = 0
 
 def readDistanceBetweenCities(distanceJson):
-   pass
+    return (distanceJson["rows"][0]["elements"][0]["distance"]["value"] / 1000)
 
-def readPositionOfCity(geocodingJson):
-    pass
+def readLatLong(geocodingJson):
+    latLongObject = geocodingJson['results'][0]['geometry']['location']
+    return latLongObject['lat'], latLongObject['lng']
 
 def readApiKey(apiKeyFile):
     apiFile = open(apiKeyFile)
     apiKey = apiFile.readline()
     apiFile.close()
     return apiKey
+
+def computeDistanceInStraightLineBetweenCities(city1, city2):
+
+    lon1, lat1, lon2, lat2 = map(radians, [city1.longitude, city1.latitude, city2.longitude, city2.latitude])
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * asin(sqrt(a))
+    km = 6367 * c
+    return km
 
 def setupCities():
     apiKey = readApiKey("apiKey")
@@ -89,8 +102,33 @@ def setupCities():
     cities.append(City("Zamość", 65149))
     cities.append(City("Warszawa", 1711000))
 
+    for city1 in cities:
+        for city2 in cities:
+            if city1.cityName != city2.cityName:
+                city1.listOfDistancesToOtherCities.append({'name': city2.cityName, 'distance': 0})
+
+
     for city in cities:
         print (city.cityName)
+        # Ustawienie odległości po ulicach i odczyt długości geograficznej
+        for listCity in city.listOfDistancesToOtherCities:
+            requestCity = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json?origins="+city.cityName+"&destinations="+listCity['name']+"&key=" + apiKey)
+            response = json.loads(requestCity.text)
+            listCity['value'] = readDistanceBetweenCities(response)
+            requestLatitude = requests.get("https://maps.googleapis.com/maps/api/geocode/json?address="+city.cityName+"&key=" + apiKeyGeo)
+            geocodingJson = json.loads(requestLatitude.text)
+            city.latitude, city.longitude = readLatLong(geocodingJson)
+
+    warsaw = 0
+    for city in cities:
+        if city.cityName == "Warszawa":
+            warsaw = city
+            break
+
+    for city in cities:
+        dist = computeDistanceInStraightLineBetweenCities(city, warsaw)
+        city.distanceToInStraightLineWarsaw(dist)
+        print(dist)
 
     return cities
 
