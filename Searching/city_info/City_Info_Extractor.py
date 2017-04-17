@@ -114,7 +114,7 @@ def setupCities():
         for listCity in city.listOfDistancesToOtherCities:
             requestCity = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json?origins="+city.cityName+"&destinations="+listCity['name']+"&key=" + apiKey)
             response = json.loads(requestCity.text)
-            listCity['value'] = readDistanceBetweenCities(response)
+            listCity['distance'] = readDistanceBetweenCities(response)
             requestLatitude = requests.get("https://maps.googleapis.com/maps/api/geocode/json?address="+city.cityName+"&key=" + apiKeyGeo)
             geocodingJson = json.loads(requestLatitude.text)
             city.latitude, city.longitude = readLatLong(geocodingJson)
@@ -126,16 +126,26 @@ def setupCities():
             break
 
     for city in cities:
-        dist = computeDistanceInStraightLineBetweenCities(city, warsaw)
-        city.distanceToInStraightLineWarsaw(dist)
-        print(dist)
+        if city.cityName != "Warszawa":
+            dist = computeDistanceInStraightLineBetweenCities(city, warsaw)
+            city.distanceToInStraightLineWarsaw = dist
+            print(dist)
 
     return cities
 
 def main():
     cities = setupCities()
+    citiesList = []
+
+    for city in cities:
+        obj = {"name": city.cityName, 'population': city.population, 'list': [], 'ditToWarsaw': city.distanceToInStraightLineWarsaw}
+        for closeCity in city.listOfDistancesToOtherCities:
+            obj['list'].append({'name':closeCity['name'], 'distance': closeCity['distance']})
+
+        citiesList.append(obj)
+
     resultFile = open("cities.json", "w+")
-    res = json.dumps(cities, ensure_ascii=False)
+    res = json.dumps(citiesList, ensure_ascii=False)
     resultFile.write(res)
     resultFile.close()
 
