@@ -52,6 +52,7 @@ def setupCities():
     print(resp)
 
     cities = []
+    cities.append(City("Warszawa", 1711000))
     cities.append(City("Szczecin", 409211))
     cities.append(City("Gdynia", 248574))
     cities.append(City("Bydgoszcz", 362286))
@@ -100,7 +101,6 @@ def setupCities():
     cities.append(City("Koszalin", 109183))
     cities.append(City("Suwałki", 69527))
     cities.append(City("Zamość", 65149))
-    cities.append(City("Warszawa", 1711000))
 
     for city1 in cities:
         for city2 in cities:
@@ -110,6 +110,8 @@ def setupCities():
 
     for city in cities:
         print (city.cityName)
+        if city.cityName == "Chełm":
+            break
         # Ustawienie odległości po ulicach i odczyt długości geograficznej
         for listCity in city.listOfDistancesToOtherCities:
             requestCity = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json?origins="+city.cityName+"&destinations="+listCity['name']+"&key=" + apiKey)
