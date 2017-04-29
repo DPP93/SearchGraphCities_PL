@@ -13,6 +13,15 @@ class NeighbourCity:
         self.distanceToParent = distanceToParent
         self.distanceToWarsaw = distanceToWarsaw
 
+class TreeNode:
+    def __init__(self, name, parentNode, childNodes, population = 0, distance = 0, distanceWarsaw = 0):
+        self.name = name
+        self.parentNode = parentNode
+        self.childNodes = childNodes
+        self.population = population
+        self.distance = distance
+        self.distanceWarsaw = distanceWarsaw
+
 def getDistanceBetweenCities(city1Name, city2Name, citiesJson):
     for city in citiesJson:
         if city["name"] == city1Name:
@@ -20,10 +29,11 @@ def getDistanceBetweenCities(city1Name, city2Name, citiesJson):
                 if neighbour["name"] == city2Name:
                     return neighbour["distance"]
 
-def getPopulation(city, jsonCity):
+def getPopulation(cityName, jsonCity):
     for c in jsonCity:
-        if city == c["name"]:
+        if cityName == c['name']:
             return c["population"]
+
 
 def getDistanceToWarsaw(cityName, citiesJson):
     if cityName == "Warszawa":
@@ -55,7 +65,6 @@ def generateGraph(citiesJson):
         citiesGraph.append(GraphCity(newGraphCityName, newNeighbours))
 
     # Znajdź powtórzenia w sąsadach (ta sama trasa)
-    print ("Powtórzenia")
     citiesGraph2 = citiesGraph
     for cityFromGraph in citiesGraph:
         neighbours = []
@@ -84,49 +93,98 @@ def generateGraph(citiesJson):
                 neighbours.append(n)
         cityFromGraph.neighbours = neighbours
 
-    for city in citiesGraph:
-        print(city.name + " -------------")
-        for n in city.neighbours:
-            print(n.name + " " + str(n.distanceToParent) + " " + str(n.distanceToWarsaw))
-        print()
+    # for city in citiesGraph:
+    #     print(city.name + " -------------")
+    #     for n in city.neighbours:
+    #         print(n.name + " " + str(n.distanceToParent) + " " + str(n.distanceToWarsaw))
+    #     print()
 
     return citiesGraph
 
+def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0):
+    visitedNodes = []
+
+    rootNode = TreeNode(startingCityName, None, [], getPopulation(startingCityName, citiesJson), 0, getDistanceToWarsaw(startingCityName, citiesJson))
+    rootNode.childNodes = getNodeNeighbours(rootNode, graphCities, citiesJson)
+    print (rootNode.name)
+
+    visitedNodes.append(rootNode)
+    nodeQueue = []
+    nodeQueue += rootNode.childNodes
+
+    maxDepth = 6
+    currentDepth = 2
+    lastNode = ""
+    parentNode = rootNode
+    currentWidth = len(parentNode.childNodes)
+    widthIndex = 0
+    while currentDepth <= maxDepth:
+        #Odczytaj pierwszy node z kolejki
+        currentNode = nodeQueue.pop(0)
+        if widthIndex == currentWidth:
+            parentNode = currentNode.parentNode
+            currentWidth = len(parentNode.childNodes)
+            currentDepth += 1
+        #Sprtawdź czy to Warszawa, jak tak to kończ i podstaw pod lastNode
+        if currentNode.name == "Warszawa":
+            lastNode = currentNode
+            break
+        #Pobierz sąsiednieNode'y (dodaj do kolejki te nieodwiedzone)
+        currentNode.childNodes = getNodeNeighbours(currentNode, graphCities, citiesJson)
+        visitedNodes.append(currentNode)
+        for child in currentNode.childNodes:
+            found = False
+            for visited in visitedNodes:
+                if visited.name == child.name:
+                    found = True
+            if found == False:
+                nodeQueue.append(child)
+        widthIndex += 1;
+
+    print ("----------------Route-----------------")
+    node = lastNode
+    while True:
+        print(node.name)
+        if node.parentNode == None:
+            break
+        node = node.parentNode
 
 
-def computeBFS(graphCities, citiesJson, startingCity, numberOfCitiesWithparticularPopulation=0, minPopulation=0):
-    maxDepth=6
-    citiesRoute = []
-    cityQueue = []
-    numberOfStepsInTree = 0
-    lastCityName = ""
-    visitedCities = []
-    cityQueue.append(startingCity)
-    isOver = False
-    currentDepth = 1
-    while isOver !=  True or currentDepth <= maxDepth:
-        print()
+def getNodeNeighbours(parentNode, graphCities, citiesJson):
+    #Znajdź parenta grafie
+    parentGraphCity = ""
+    neighboursGraph = []
+    neighboursNodes = []
+    for parent in graphCities:
+        if parentNode.name == parent.name:
+            parentGraphCity = parent
+            neighboursGraph = parent.neighbours
+            break
+    #Nie podpisanaj parenta jako sąsiada
+    for n in neighboursGraph:
+        neighboursNodes.append(TreeNode(n.name, parentNode, [], getPopulation(n.name, citiesJson), getDistanceBetweenCities(parentNode.name, n.name, citiesJson), getDistanceToWarsaw(n.name, citiesJson)))
 
-    return citiesRoute
+    return neighboursNodes
 
-def getNeighbours(city, visitedCities):
-    returnedCities = []
-    for neigh in city.neighbours:
+
+def getNonVisitedNeighbours(neighbours, visitedCities):
+    citiesToVisit = []
+    for n in neighbours:
         found = False
-        for visitedCity in visitedCities:
-            if visitedCities == neigh:
+        for v in visitedCities:
+            if n.name == v.name:
                 found = True
-                break
         if found == False:
-            returnedCities.append(neigh)
-    return returnedCities
+            citiesToVisit.append(n)
+    return citiesToVisit
+
 
 def main():
     jsonCities = ""
     with open("cities_merged.json") as cities_json:
         jsonCities = json.load(cities_json)
     graph = generateGraph(jsonCities)
-
+    computeBFS(graph, jsonCities, "Zakopane")
 
 if __name__ == "__main__":
     main()
