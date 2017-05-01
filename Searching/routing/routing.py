@@ -93,12 +93,6 @@ def generateGraph(citiesJson):
                 neighbours.append(n)
         cityFromGraph.neighbours = neighbours
 
-    # for city in citiesGraph:
-    #     print(city.name + " -------------")
-    #     for n in city.neighbours:
-    #         print(n.name + " " + str(n.distanceToParent) + " " + str(n.distanceToWarsaw))
-    #     print()
-
     return citiesGraph
 
 def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0):
@@ -116,15 +110,12 @@ def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithpart
     currentDepth = 2
     lastNode = ""
     parentNode = rootNode
-    currentWidth = len(parentNode.childNodes)
     widthIndex = 0
     while currentDepth <= maxDepth:
         #Odczytaj pierwszy node z kolejki
         currentNode = nodeQueue.pop(0)
-        if widthIndex == currentWidth:
-            parentNode = currentNode.parentNode
-            currentWidth = len(parentNode.childNodes)
-            currentDepth += 1
+        if len(getRouteToRootNode(currentNode)) > maxDepth:
+            break
         #Sprtawdź czy to Warszawa, jak tak to kończ i podstaw pod lastNode
         visitedNodes.append(currentNode)
         if currentNode.name == "Warszawa":
@@ -142,16 +133,26 @@ def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithpart
         widthIndex += 1;
 
     print ("----------------Route-----------------")
-    node = lastNode
+    route = getRouteToRootNode(lastNode)
     distance = 0
+
+    for r in route:
+        print (r.name)
+        distance += r.distance
+
+    print ("Depth " + str(len(route)))
+    print ("WHOLE DISTANCE " + str(distance) + "km")
+    print ("Visited nodes " + str(len(visitedNodes)))
+
+def getRouteToRootNode (lastNode):
+    route = []
+    node = lastNode
     while True:
-        print(node.name)
-        distance += node.distance
+        route.append(node)
         if node.parentNode == None:
             break
         node = node.parentNode
-    print ("WHOLE DISTANCE " + str(distance) + "km")
-    print ("Visited nodes " + str(len(visitedNodes)))
+    return route
 
 def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0):
     visitedNodes = []
@@ -160,29 +161,32 @@ def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitie
     rootNode.childNodes = getNodeNeighbours(rootNode, graphCities, citiesJson)
     print (rootNode.name)
 
+    rootNode.childNodes = sorted(rootNode.childNodes, key=lambda x: x.distanceWarsaw)
+
     visitedNodes.append(rootNode)
     nodeQueue = []
-    nodeQueue += rootNode.childNodes
+
+    nodeQueue = rootNode.childNodes + nodeQueue
 
     maxDepth = 6
-    currentDepth = 2
     lastNode = ""
     parentNode = rootNode
-    currentWidth = len(parentNode.childNodes)
     widthIndex = 0
-    while currentDepth <= maxDepth:
+    while True:
         #Odczytaj pierwszy node z kolejki
         currentNode = nodeQueue.pop(0)
-        if widthIndex == currentWidth:
-            parentNode = currentNode.parentNode
-            currentWidth = len(parentNode.childNodes)
-            currentDepth += 1
+
+        if len(getRouteToRootNode(currentNode)) > maxDepth:
+            break
+
         #Sprtawdź czy to Warszawa, jak tak to kończ i podstaw pod lastNode
         if currentNode.name == "Warszawa":
             lastNode = currentNode
             break
+
         #Pobierz sąsiednieNode'y (dodaj do kolejki te nieodwiedzone)
         currentNode.childNodes = getNodeNeighbours(currentNode, graphCities, citiesJson)
+        currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distanceWarsaw, reverse=True)
         visitedNodes.append(currentNode)
         for child in currentNode.childNodes:
             found = False
@@ -190,19 +194,22 @@ def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitie
                 if visited.name == child.name:
                     found = True
             if found == False:
-                nodeQueue.append(child)
+                nodeQueue = [child] + nodeQueue
         widthIndex += 1;
 
     print ("----------------Route-----------------")
-    node = lastNode
+    route = getRouteToRootNode(lastNode)
     distance = 0
-    while True:
-        print(node.name)
-        distance += node.distance
-        if node.parentNode == None:
-            break
-        node = node.parentNode
-    print ("WHOLE DISTANCE " + str(distance))
+
+    for r in route:
+        print (r.name)
+        distance += r.distance
+
+    print ("Depth " + str(len(route)))
+    print ("WHOLE DISTANCE " + str(distance) + "km")
+    print ("Visited nodes " + str(len(visitedNodes)))
+
+
 
 def getNodeNeighbours(parentNode, graphCities, citiesJson):
     #Znajdź parenta grafie
@@ -239,6 +246,8 @@ def main():
         jsonCities = json.load(cities_json)
     graph = generateGraph(jsonCities)
     computeBFS(graph, jsonCities, "Zakopane")
+    print()
+    computeGreedySearch(graph, jsonCities, "Zakopane")
 
 if __name__ == "__main__":
     main()
