@@ -97,12 +97,12 @@ def generateGraph(citiesJson, maxNumbersOfNeighbours=5):
     return citiesGraph
 
 def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0, maxDepth = 10):
-    visitedNodes = []
+    vNodes = []
 
     rootNode = TreeNode(startingCityName, None, [], getPopulation(startingCityName, citiesJson), 0, getDistanceToWarsaw(startingCityName, citiesJson))
     rootNode.childNodes = getNodeNeighbours(rootNode, graphCities, citiesJson)
 
-    visitedNodes.append(rootNode)
+    vNodes.append(rootNode)
     nodeQueue = list()
     nodeQueue += rootNode.childNodes
 
@@ -119,7 +119,7 @@ def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithpart
 
         #Sprtawdź czy to Warszawa, jak tak to kończ i podstaw pod lastNode
         if currentNode.name != "Warszawa":
-            visitedNodes.append(currentNode)
+            vNodes.append(currentNode)
         if checkEnd(currentNode, numberOfCitiesWithparticularPopulation, minPopulation):
             lastNode = currentNode
             break
@@ -128,21 +128,28 @@ def computeBFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithpart
         currentNode.childNodes = getNodeNeighbours(currentNode, graphCities, citiesJson)
         for child in currentNode.childNodes:
             found = False
+            # visitedNumber = len(visitedNodes)
+            # if visitedNumber > 4:
+            #     for i in range(visitedNumber - 4, visitedNumber-1):
+            #         if visitedNodes[i].name == child.parentNode.name:
+            #             found = True
+            # else:
+            visitedNodes = getRouteToRootNode(currentNode)
             for visited in visitedNodes:
                 if visited.name == child.name:
                     found = True
             if found == False:
                 nodeQueue.append(child)
 
-    printResult(lastNode, visitedNodes, "BFS")
+    printResult(lastNode, vNodes, "BFS")
 
 def computeDFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0, maxDepth = 10):
-    visitedNodes = []
+    vNodes = []
 
     rootNode = TreeNode(startingCityName, None, [], getPopulation(startingCityName, citiesJson), 0, getDistanceToWarsaw(startingCityName, citiesJson))
     rootNode.childNodes = getNodeNeighbours(rootNode, graphCities, citiesJson)
 
-    visitedNodes.append(rootNode)
+    vNodes.append(rootNode)
     nodeQueue = list()
     nodeQueue += rootNode.childNodes
 
@@ -160,7 +167,7 @@ def computeDFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithpart
 
         #Sprtawdź czy to Warszawa, jak tak to kończ i podstaw pod lastNode
         if currentNode.name != "Warszawa":
-            visitedNodes.append(currentNode)
+            vNodes.append(currentNode)
         if checkEnd(currentNode, numberOfCitiesWithparticularPopulation, minPopulation):
             lastNode = currentNode
             break
@@ -169,23 +176,26 @@ def computeDFS(graphCities, citiesJson, startingCityName, numberOfCitiesWithpart
         currentNode.childNodes = getNodeNeighbours(currentNode, graphCities, citiesJson)
         for child in currentNode.childNodes:
             found = False
+            visitedNodes = getRouteToRootNode(currentNode)
             for visited in visitedNodes:
                 if visited.name == child.name:
                     found = True
             if found == False:
                 nodeQueue = [child] + nodeQueue
 
-    printResult(lastNode, visitedNodes, "DFS")
+    printResult(lastNode, vNodes, "DFS")
 
 def printResult(lastNode, visitedNodes, algorithmName):
     print ("----------------" + algorithmName + " Route-----------------")
     route = getRouteToRootNode(lastNode)
     distance = 0
-
+    citiesNames = []
     for r in route:
         if r != "":
             print (r.name + " pop. " + str(r.population))
+            citiesNames = [r.name] + citiesNames
             distance += r.distance
+    print (citiesNames)
 
     print ("Depth " + str(len(route)))
     print ("WHOLE DISTANCE " + str(distance) + "km")
@@ -217,8 +227,20 @@ def checkEnd(node, numberofCitiesWithParticularPopulation, minPopulation):
 
     return False
 
+def checkPopulation(node, numberofCitiesWithParticularPopulation, minPopulation):
+
+    route = getRouteToRootNode(node)
+    visitedCitiesWithPopulation = 0
+
+    for r in route:
+        if r.name != "Warszawa" and r.population >= minPopulation:
+            visitedCitiesWithPopulation += 1
+    if visitedCitiesWithPopulation >= numberofCitiesWithParticularPopulation:
+        return True
+    return False
+
 def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0, maxDepth = 10):
-    visitedNodes = []
+    vNodes = []
 
     rootNode = TreeNode(startingCityName, None, [], getPopulation(startingCityName, citiesJson), 0, getDistanceToWarsaw(startingCityName, citiesJson))
     rootNode.childNodes = getNodeNeighbours(rootNode, graphCities, citiesJson)
@@ -226,7 +248,7 @@ def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitie
 
     rootNode.childNodes = sorted(rootNode.childNodes, key=lambda x: x.distanceWarsaw)
 
-    visitedNodes.append(rootNode)
+    vNodes.append(rootNode)
     nodeQueue = []
 
     nodeQueue = rootNode.childNodes + nodeQueue
@@ -256,8 +278,11 @@ def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitie
         #Pobierz sąsiednieNode'y (dodaj do kolejki te nieodwiedzone)
         currentNode.childNodes = getNodeNeighbours(currentNode, graphCities, citiesJson)
         currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distanceWarsaw)
+        # currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.population, reverse=True)
         if currentNode.name != "Warszawa":
-            visitedNodes.append(currentNode)
+            vNodes.append(currentNode)
+
+        visitedNodes = getRouteToRootNode(currentNode)
         for child in currentNode.childNodes:
             found = False
             for visited in visitedNodes:
@@ -266,19 +291,22 @@ def computeGreedySearch(graphCities, citiesJson, startingCityName, numberOfCitie
             if found == False:
                 nodeQueue.append(child)
 
-    printResult(lastNode, visitedNodes, "Greedy")
+    printResult(lastNode, vNodes, "Greedy")
 
 def computeAStarSearch(graphCities, citiesJson, startingCityName, numberOfCitiesWithparticularPopulation=0, minPopulation=0, maxDepth = 10):
-    visitedNodes = []
+    vNodes = []
 
     rootNode = TreeNode(startingCityName, None, [], getPopulation(startingCityName, citiesJson), 0, getDistanceToWarsaw(startingCityName, citiesJson))
     rootNode.childNodes = getNodeNeighbours(rootNode, graphCities, citiesJson)
-    print (rootNode.name)
+    for c in rootNode.childNodes:
+        if c.population == None:
+            c.population = 0
 
     rootNode.childNodes = sorted(rootNode.childNodes, key=lambda x: x.distanceWarsaw)
-    rootNode.childNodes = sorted(rootNode.childNodes, key=lambda x: x.distance)
+    # rootNode.childNodes = sorted(rootNode.childNodes, key=lambda x: x.distance)
+    # rootNode.childNodes = sorted(rootNode.childNodes, key=lambda x: x.population, reverse=True)
 
-    visitedNodes.append(rootNode)
+    vNodes.append(rootNode)
     nodeQueue = []
 
     nodeQueue = rootNode.childNodes + nodeQueue
@@ -307,10 +335,21 @@ def computeAStarSearch(graphCities, citiesJson, startingCityName, numberOfCities
 
         #Pobierz sąsiednieNode'y (dodaj do kolejki te nieodwiedzone)
         currentNode.childNodes = getNodeNeighbours(currentNode, graphCities, citiesJson)
-        currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distanceWarsaw)
-        currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distance)
+        for c in currentNode.childNodes:
+            if c.population == None:
+                c.population = 0
+
+        if checkPopulation(currentNode, numberOfCitiesWithparticularPopulation, minPopulation):
+            currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distanceWarsaw)
+            currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distance)
+        else:
+            currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distanceWarsaw)
+            currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.distance)
+            currentNode.childNodes = sorted(currentNode.childNodes, key=lambda x: x.population, reverse=True)
+
         if currentNode.name != "Warszawa":
-            visitedNodes.append(currentNode)
+            vNodes.append(currentNode)
+        visitedNodes = getRouteToRootNode(currentNode)
         for child in currentNode.childNodes:
             found = False
             for visited in visitedNodes:
@@ -319,7 +358,7 @@ def computeAStarSearch(graphCities, citiesJson, startingCityName, numberOfCities
             if found == False:
                 nodeQueue.append(child)
 
-    printResult(lastNode, visitedNodes, "A*")
+    printResult(lastNode, vNodes, "A*")
 
 def getNodeNeighbours(parentNode, graphCities, citiesJson):
     #Znajdź parenta grafie
@@ -356,28 +395,28 @@ def main():
     minimumCities = 3
     maxDepth = 15
     minimalPopulation = 400000
-    minNumberOfNeighbours = 3
+    minNumberOfNeighbours = 5
 
     graph = generateGraph(jsonCities, minNumberOfNeighbours)
 
-    # print("-+-+-+-+GRAPH+-+-+-+")
-    #
-    # for g in graph:
-    #     print(g.name+"+")
-    #     shuffle(g.neighbours)
-    #     for n in g.neighbours:
-    #         print ("    "+n.name)
-    #     print ("------------------------------------")
+    print("-+-+-+-+GRAPH+-+-+-+")
 
-    startingCity = "Płock"
-    print("-+-+-+-+-+-+-+")
-    computeBFS(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
-    print("-+-+-+-+-+-+-+")
-    computeDFS(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
-    print("-+-+-+-+-+-+-+")
-    computeGreedySearch(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
-    print("-+-+-+-+-+-+-+")
-    computeAStarSearch(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
+    for g in graph:
+        shuffle(g.neighbours)
+        for n in g.neighbours:
+            if n.name == "Warszawa":
+                n.population = 0
+
+    # startingCity = "Ostrów Wielkopolski"
+    startingCity = "Krosno"
+    # print("-+-+-+-+-+-+-+")
+    # computeBFS(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
+    # print("-+-+-+-+-+-+-+")
+    # computeDFS(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
+    # print("-+-+-+-+-+-+-+")
+    # computeGreedySearch(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
+    # print("-+-+-+-+-+-+-+")
+    # computeAStarSearch(graph, jsonCities, startingCity, minimumCities, minimalPopulation, maxDepth)
 
     #TODO: 
 
