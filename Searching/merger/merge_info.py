@@ -18,10 +18,10 @@ def mergeJsons(firstJsonFileName, secondJsonFileName):
             mergedJson.append(city)
 
     for city in mergedJson:
-        if city["distToWarsaw"] == 6125.918851261341:
+        if city["ditToWarsaw"] == 6125.918851261341:
             for city_second in secondJson:
                 if city["name"] == city_second["name"]:
-                    city["distToWarsaw"] = city_second["distToWarsaw"]
+                    city["ditToWarsaw"] = city_second["ditToWarsaw"]
         for neighbour_city in city["list"]:
             if neighbour_city["distance"] == 0:
                 for city_second in secondJson:

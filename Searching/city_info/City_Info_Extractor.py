@@ -53,29 +53,6 @@ def setupCities():
 
     cities = []
     cities.append(City("Warszawa", 1711000))
-    cities.append(City("Szczecin", 409211))
-    cities.append(City("Gdynia", 248574))
-    cities.append(City("Bydgoszcz", 362286))
-    cities.append(City("Gdańsk", 460354))
-    cities.append(City("Białystok", 294675))
-    cities.append(City("Olsztyn", 175482))
-    cities.append(City("Poznań", 552393))
-    cities.append(City("Włocławek", 115982))
-    cities.append(City("Częstochowa", 235156))
-    cities.append(City("Katowice", 308269))
-    cities.append(City("Kraków", 759131))
-    cities.append(City("Rzeszów", 180776))
-    cities.append(City("Przemyśl", 62485))
-    cities.append(City("Krosno", 46934))
-    cities.append(City("Nowy Sącz", 83903))
-    cities.append(City("Zakopane", 27486))
-    cities.append(City("Lublin", 324637))
-    cities.append(City("Łódź", 722022))
-    cities.append(City("Wrocław", 631377))
-    cities.append(City("Jelenia Góra", 84306))
-    cities.append(City("Zielona Góra", 119182))
-    cities.append(City("Bielsko Biała", 174291))
-    cities.append(City("Radom", 220062))
     cities.append(City("Chełm", 63949))
     cities.append(City("Sieradz", 44045))
     cities.append(City("Garwolin", 16710))
@@ -101,6 +78,30 @@ def setupCities():
     cities.append(City("Koszalin", 109183))
     cities.append(City("Suwałki", 69527))
     cities.append(City("Zamość", 65149))
+    cities.append(City("Szczecin", 409211))
+    cities.append(City("Gdynia", 248574))
+    cities.append(City("Bydgoszcz", 362286))
+    cities.append(City("Gdańsk", 460354))
+    cities.append(City("Białystok", 294675))
+    cities.append(City("Olsztyn", 175482))
+    cities.append(City("Poznań", 552393))
+    cities.append(City("Włocławek", 115982))
+    cities.append(City("Częstochowa", 235156))
+    cities.append(City("Katowice", 308269))
+    cities.append(City("Kraków", 759131))
+    cities.append(City("Rzeszów", 180776))
+    cities.append(City("Przemyśl", 62485))
+    cities.append(City("Krosno", 46934))
+    cities.append(City("Nowy Sącz", 83903))
+    cities.append(City("Zakopane", 27486))
+    cities.append(City("Lublin", 324637))
+    cities.append(City("Łódź", 722022))
+    cities.append(City("Wrocław", 631377))
+    cities.append(City("Jelenia Góra", 84306))
+    cities.append(City("Zielona Góra", 119182))
+    cities.append(City("Bielsko Biała", 174291))
+    cities.append(City("Radom", 220062))
+
 
     for city1 in cities:
         for city2 in cities:
@@ -110,7 +111,7 @@ def setupCities():
 
     for city in cities:
         print (city.cityName)
-        if city.cityName == "Chełm":
+        if city.cityName == "Szczecin":
             break
         # Ustawienie odległości po ulicach i odczyt długości geograficznej
         for listCity in city.listOfDistancesToOtherCities:
@@ -140,7 +141,7 @@ def main():
     citiesList = []
 
     for city in cities:
-        obj = {"name": city.cityName, 'population': city.population, 'list': [], 'ditToWarsaw': city.distanceToInStraightLineWarsaw}
+        obj = {"name": city.cityName, 'population': city.population, 'list': [], 'ditToWarsaw': city.distanceToInStraightLineWarsaw, 'lng': city.longitude, 'lat': city.latitude}
         for closeCity in city.listOfDistancesToOtherCities:
             obj['list'].append({'name':closeCity['name'], 'distance': closeCity['distance']})
 
